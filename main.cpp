@@ -1,6 +1,8 @@
 
 #include "Board.hpp"
 
+#include "BoardModel.hpp"
+
 using namespace ajd::tictactoe3d;
 
 void testBoard()
@@ -40,6 +42,7 @@ int main( int argc, char *argv[] )
 {
     QGuiApplication app( argc, argv );
 
+    BoardModel boardModel;
     QQmlApplicationEngine engine;
     QObject::connect(
         &engine,
@@ -50,9 +53,17 @@ int main( int argc, char *argv[] )
         QCoreApplication::exit( -1 );
     },
     Qt::QueuedConnection );
+
+    engine.setInitialProperties(
+    {
+        { "boardModel", QVariant::fromValue( &boardModel ) }
+    } );
+
     engine.loadFromModule( "Q3DTicTacToe", "Main" );
 
-    testBoard();
+    //testBoard();
+
+
 
     return app.exec();
 }

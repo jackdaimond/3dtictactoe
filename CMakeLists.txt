@@ -5,9 +5,11 @@ project(Q3DTicTacToe VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
 set(SOURCES
-    Board.hpp Board.cpp
+    Board.hpp       Board.cpp
+    BoardModel.hpp  BoardModel.cpp
     main.cpp
     stdincludes.hpp
 )
@@ -22,6 +24,7 @@ qt_add_qml_module(appQ3DTicTacToe
     URI Q3DTicTacToe
     QML_FILES
         Main.qml
+        ui/TicTacToeBoard.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -38,6 +41,7 @@ set_target_properties(appQ3DTicTacToe PROPERTIES
 target_link_libraries(appQ3DTicTacToe
     PRIVATE Qt6::Quick
 )
+target_link_libraries(appQ3DTicTacToe PRIVATE Qt6::Core)
 
 target_precompile_headers(appQ3DTicTacToe PUBLIC stdincludes.hpp)
 
