@@ -4,13 +4,19 @@ Window {
     id: root
     required property QtObject boardModel
 
-    width: boardRow.width + 50
+    width: boardRow.width + 100
     height: boardRow.height + 50 + playerText.height
     visible: true
     title: qsTr("3D Tic Tac Toe")
 
     Component.onCompleted: {
         boardModel.currentPlayer = 1
+    }
+
+    Rectangle {
+        id: background
+        color: Qt.rgba(0, 0, 0.5, 1)
+        anchors.fill: parent
     }
 
     Connections {
@@ -42,9 +48,10 @@ Window {
         property string currPlayerString: boardModel.currentPlayer === 1? "A" : "B"
         text: qsTr("Current Player: " + currPlayerString )
         font.pointSize: 24
+        color: "#ffffff"
     }
 
-    Row {
+    Column {
         id: boardRow
 
         x: (parent.width - width) / 2

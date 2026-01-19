@@ -5,86 +5,205 @@ Item {
     property QtObject theModel
     property int ebene: 0
 
+    property color backColor: Qt.rgba(0, 0, 0.5, 1);
+
     width: grid.width
     height: grid.height
+
+    // Rectangle {
+    //     anchors.fill: parent
+    //     color: "green"
+    // }
 
     Item {
         id: privData
 
-        readonly property int tileSize: 40
-    }
+        readonly property int tileSize: 60
 
-    Grid
-    {
-        id: grid
-        rows: theModel.boardSize
-        columns: theModel.boardSize
+        property int boardHoverIndex: -1
+        property int boardSize: ctrl.theModel.boardSize
 
-        Repeater {
-            model: theModel.boardSize * theModel.boardSize
+        readonly property real myHeight: tileSize * (boardSize - 1)
+        readonly property var uV: Qt.vector2d(tileSize - 1, myHeight - 1)
+        readonly property real magnitude : uV.length()
+        readonly property var dirV: Qt.vector2d(uV.x / magnitude, uV.y / magnitude)
 
-            Rectangle {
-                width: privData.tileSize; height: privData.tileSize
-                border.width: 1
-                color: mouseHandler.boardIndex === index? "orange" : "yellow"
-
-                readonly property int boardX : index % theModel.boardSize
-                readonly property int boardY : index / theModel.boardSize
-
-                property int val : ctrl.theModel.value(ctrl.ebene, boardX, boardY)
-
-                Text {
-                    id: boardText
-                    anchors.fill: parent
-                    text: val === 1? 'X' : val === 2? 'O' : ''
-                    font.pixelSize: privData.tileSize - 10
-
-                    verticalAlignment: Text.AlignVCenter
-                    horizontalAlignment: Text.AlignHCenter
-                }
-
-                Connections {
-                    target: theModel
-                    function onValueChanged(boardIndex)
-                    {
-                        if(boardIndex === index)
-                            val = ctrl.theModel.value(ctrl.ebene, boardX, boardY)
-                    }
-                    function onBoardReseted()
-                    {
-                        val = ctrl.theModel.value(ctrl.ebene, boardX, boardY)
-                    }
-                }
+        function setBoardHoverIndex(index)
+        {
+            if(index !== privData.boardHoverIndex)
+            {
+                privData.boardHoverIndex = index;
+                grid.requestPaint();
             }
         }
+
     }
+
+    Canvas {
+        id: grid
+
+        width: privData.tileSize * 4
+        height: privData.tileSize * 3
+
+        readonly property real magnitude : privData.magnitude
+
+        onPaint: {
+            var ctx = getContext("2d");
+
+            var myHeight = privData.tileSize * 3
+            var tileWidth = myHeight / 4
+            var tileHeight = myHeight / 4
+
+            const v = [privData.dirV.x, privData.dirV.y]
+
+            ctx.strokeStyle = Qt.rgba(1, 1, 1, 1);
+            ctx.fillStyle = ctrl.backColor
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            {
+                ctx.moveTo(1, 1);
+                ctx.lineTo(privData.tileSize, myHeight - 1);
+                ctx.lineTo(privData.tileSize * 4, myHeight- 1);
+                ctx.lineTo(privData.tileSize * 4 - privData.tileSize, 1);
+                ctx.lineTo(1, 1);
+                ctx.fill()
+
+                for(let i = 0.25; i < 1.0; i += 0.25)
+                {
+                    ctx.moveTo(v[0] * i * magnitude, v[1] * i * magnitude)
+                    ctx.lineTo(v[0] * i * magnitude + myHeight, v[1] * i * magnitude)
+
+                    ctx.moveTo(tileWidth * i * 4, 1)
+                    ctx.lineTo(tileWidth * (i * 4) + privData.tileSize , myHeight - 1)
+                }
+
+            }
+            ctx.stroke();
+
+            if(privData.boardHoverIndex !== -1)
+            {
+                ctx.beginPath()
+                {
+                    ctx.fillStyle = Qt.color("orange")
+                    var dY = Math.floor(privData.boardHoverIndex / privData.boardSize) / 4
+                    var dX = Math.floor((privData.boardHoverIndex / privData.boardSize - dY * 4) * privData.boardSize) / 4
+
+                    const startX = v[0] * dX * magnitude + 2
+                    const startY = v[1] * dY * magnitude + 2
+
+                    const endX = v[0] * (dX + 0.25) * magnitude + 2
+                    const endY = v[1] * (dY + 0.25) * magnitude - 1
+
+                    ctx.moveTo(startX, startY)
+                    ctx.lineTo(endX, endY)
+                    ctx.lineTo(endX + tileWidth - 3, endY)
+                    ctx.lineTo(startX + tileWidth-3, startY)
+                    ctx.lineTo(startX, startY)
+                }
+                ctx.fill()
+            }
+
+        }
+    }
+
     MouseArea {
         id: mouseHandler
-        anchors.fill: grid
+        anchors.fill: parent
         acceptedButtons: Qt.LeftButton
         hoverEnabled: true
 
-        property int boardIndex: -1
-
-        function mouseToBoardCoord(mouseCoord) {
-            return Math.floor(mouseCoord / privData.tileSize)
-        }
-
-        onClicked: (mouse) => {
-            var boardX = mouseToBoardCoord(mouse.x)
-            var boardY = mouseToBoardCoord(mouse.y)
-
-            theModel.setValue(ctrl.ebene, boardX, boardY)
+        function mouseToBoardCoord(mouseX, mouseY) {
+            return [4, 0];
         }
 
         onPositionChanged: (mouse) => {
-            var boardX = mouseToBoardCoord(mouse.x)
-            var boardY = mouseToBoardCoord(mouse.y)
+            const boardCoords = mouseToBoardCoord(mouse.x, mouse.Y);
 
-            mouseHandler.boardIndex = boardY * ctrl.theModel.boardSize + boardX
+            var newHoverIndex = -1;
+            if(boardCoords[0] >= 0 && boardCoords[1] >= 0)
+                newHoverIndex = boardCoords[1] * ctrl.theModel.boardSize + boardCoords[0]
+
+            privData.setBoardHoverIndex(newHoverIndex)
         }
 
-        onExited: boardIndex = -1
+        onExited:
+        {
+            privData.setBoardHoverIndex(-1)
+        }
     }
+
+    // Grid
+    // {
+    //     id: grid2
+    //     rows: theModel.boardSize
+    //     columns: theModel.boardSize
+
+    //     Repeater {
+    //         model: theModel.boardSize * theModel.boardSize
+
+    //         Rectangle {
+    //             width: privData.tileSize; height: privData.tileSize
+    //             border.width: 1
+    //             color: mouseHandler.boardIndex === index? "orange" : "yellow"
+
+    //             readonly property int boardX : index % theModel.boardSize
+    //             readonly property int boardY : index / theModel.boardSize
+
+    //             property int val : ctrl.theModel.value(ctrl.ebene, boardX, boardY)
+
+    //             Text {
+    //                 id: boardText
+    //                 anchors.fill: parent
+    //                 text: val === 1? 'X' : val === 2? 'O' : ''
+    //                 font.pixelSize: privData.tileSize - 10
+
+    //                 verticalAlignment: Text.AlignVCenter
+    //                 horizontalAlignment: Text.AlignHCenter
+    //             }
+
+    //             Connections {
+    //                 target: theModel
+    //                 function onValueChanged(boardIndex)
+    //                 {
+    //                     if(boardIndex === index)
+    //                         val = ctrl.theModel.value(ctrl.ebene, boardX, boardY)
+    //                 }
+    //                 function onBoardReseted()
+    //                 {
+    //                     val = ctrl.theModel.value(ctrl.ebene, boardX, boardY)
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // MouseArea {
+    //     id: mouseHandler
+    //     anchors.fill: grid
+    //     acceptedButtons: Qt.LeftButton
+    //     hoverEnabled: true
+
+    //     property int boardIndex: -1
+
+    //     function mouseToBoardCoord(mouseCoord) {
+    //         return Math.floor(mouseCoord / privData.tileSize)
+    //     }
+
+    //     onClicked: (mouse) => {
+    //         var boardX = mouseToBoardCoord(mouse.x)
+    //         var boardY = mouseToBoardCoord(mouse.y)
+
+    //         theModel.setValue(ctrl.ebene, boardX, boardY)
+    //     }
+
+    //     onPositionChanged: (mouse) => {
+    //         var boardX = mouseToBoardCoord(mouse.x)
+    //         var boardY = mouseToBoardCoord(mouse.y)
+
+    //         mouseHandler.boardIndex = boardY * ctrl.theModel.boardSize + boardX
+    //     }
+
+    //     onExited: boardIndex = -1
+    // }
 
 }

@@ -16,6 +16,7 @@ class BoardModel : public QObject
 
     public:
         explicit BoardModel( QObject *parent = nullptr );
+        ~BoardModel();
 
         Q_INVOKABLE int value( size_t ebene, size_t x, size_t y ) const;
         Q_INVOKABLE void setValue( size_t ebene, size_t x, size_t y );

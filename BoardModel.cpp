@@ -10,6 +10,10 @@ BoardModel::BoardModel( QObject *parent )
     , m_board( std::make_unique<Board>() )
 {}
 
+BoardModel::~BoardModel()
+{
+}
+
 int BoardModel::value( size_t ebene, size_t x, size_t y ) const
 {
     return static_cast<int>( m_board->value( ebene, x, y ) );
