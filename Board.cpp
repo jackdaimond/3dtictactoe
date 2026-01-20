@@ -51,6 +51,9 @@ CheckResult_t Board::checkWinner() const
     if ( res )
         return std::move( res );
 
+    res = checkWinner( BOARD_SIZE - 1, -1 );
+    if ( res )
+        return std::move( res );
 
     return {};
 }
@@ -71,6 +74,20 @@ CheckResult_t Board::checkWinner( size_t ebene, int dEbene ) const
         if ( result )
             return std::move( result );
     }
+
+    if ( dEbene != 0 )
+    {
+        for ( size_t x = 0; x < BOARD_SIZE; x++ )
+        {
+            for ( size_t y = 0; y < BOARD_SIZE; y++ )
+            {
+                result = checkWinner( ebene, x, y, dEbene, 0, 0 );
+                if ( result )
+                    return std::move( result );
+            }
+        }
+    }
+
     result = checkWinner( ebene, 0, 0, dEbene, 1, 1 );
     if ( result )
         return std::move( result );
