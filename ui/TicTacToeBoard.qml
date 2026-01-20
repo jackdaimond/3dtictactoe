@@ -37,6 +37,14 @@ Item {
             }
         }
 
+        function boardCoordsFromCurrentIndex()
+        {
+            var dY = Math.floor(boardHoverIndex / boardSize) / 4
+            var dX = Math.floor((boardHoverIndex / boardSize - dY * 4) * boardSize)
+
+            return [dX, dY]
+        }
+
     }
 
     Canvas {
@@ -54,7 +62,7 @@ Item {
             var tileWidth = myHeight / 4
             var tileHeight = myHeight / 4
 
-            const v = [privData.dirV.x, privData.dirV.y]
+            const dirV = [privData.dirV.x, privData.dirV.y]
 
             ctx.strokeStyle = Qt.rgba(1, 1, 1, 1);
             ctx.fillStyle = ctrl.backColor
@@ -71,8 +79,8 @@ Item {
 
                 for(let i = 0.25; i < 1.0; i += 0.25)
                 {
-                    ctx.moveTo(v[0] * i * magnitude, v[1] * i * magnitude)
-                    ctx.lineTo(v[0] * i * magnitude + myHeight, v[1] * i * magnitude)
+                    ctx.moveTo(dirV[0] * i * magnitude, dirV[1] * i * magnitude)
+                    ctx.lineTo(dirV[0] * i * magnitude + myHeight, dirV[1] * i * magnitude)
 
                     ctx.moveTo(tileWidth * i * 4, 1)
                     ctx.lineTo(tileWidth * (i * 4) + privData.tileSize , myHeight - 1)
@@ -86,19 +94,20 @@ Item {
                 ctx.beginPath()
                 {
                     ctx.fillStyle = Qt.color("orange")
+
                     var dY = Math.floor(privData.boardHoverIndex / privData.boardSize) / 4
-                    var dX = Math.floor((privData.boardHoverIndex / privData.boardSize - dY * 4) * privData.boardSize) / 4
+                    var dX = Math.floor((privData.boardHoverIndex / privData.boardSize - dY * 4) * privData.boardSize)
 
-                    const startX = v[0] * dX * magnitude + 2
-                    const startY = v[1] * dY * magnitude + 2
+                    const startX = privData.dirV.x * dY * magnitude + 2 + dX * privData.myHeight / 4
+                    const startY = privData.dirV.y * dY * magnitude + 2
 
-                    const endX = v[0] * (dX + 0.25) * magnitude + 2
-                    const endY = v[1] * (dY + 0.25) * magnitude - 1
+                    const endX = privData.dirV.x * (dY + 0.25) * magnitude + 2 + dX * privData.myHeight / 4
+                    const endY = privData.dirV.y * (dY + 0.25) * magnitude - 1
 
                     ctx.moveTo(startX, startY)
                     ctx.lineTo(endX, endY)
-                    ctx.lineTo(endX + tileWidth - 3, endY)
-                    ctx.lineTo(startX + tileWidth-3, startY)
+                    ctx.lineTo(endX + privData.myHeight / 4 - 4, endY)
+                    ctx.lineTo(startX + privData.myHeight / 4 - 4, startY)
                     ctx.lineTo(startX, startY)
                 }
                 ctx.fill()
@@ -114,11 +123,30 @@ Item {
         hoverEnabled: true
 
         function mouseToBoardCoord(mouseX, mouseY) {
-            return [4, 0];
+
+            const dY = mouseY / privData.myHeight
+            const y = Math.min(3.0, Math.floor(dY * privData.boardSize))
+
+            const startX = privData.dirV.x * privData.magnitude * dY
+            const mouseXNorm = mouseX - startX
+            var x = -1
+            if(mouseXNorm >= 0)
+            {
+                var dX = mouseXNorm / privData.myHeight;
+                x = Math.min(3.0, Math.floor(dX * privData.boardSize))
+            }
+
+            return [x, y];
+        }
+
+        onClicked: (mouse) => {
+            const boardCoords = mouseToBoardCoord(mouse.x, mouse.y);
+
+            theModel.setValue(ctrl.ebene, boardCoords[0], boardCoords[1])
         }
 
         onPositionChanged: (mouse) => {
-            const boardCoords = mouseToBoardCoord(mouse.x, mouse.Y);
+            const boardCoords = mouseToBoardCoord(mouse.x, mouse.y);
 
             var newHoverIndex = -1;
             if(boardCoords[0] >= 0 && boardCoords[1] >= 0)
