@@ -112,6 +112,51 @@ Item {
                 }
                 ctx.fill()
             }
+            //ctx.beginPath();
+            {
+                for(let x = 0; x < ctrl.theModel.boardSize; x++)
+                {
+                    for(let y = 0; y < ctrl.theModel.boardSize; y++)
+                    {
+                        const val = ctrl.theModel.value(ctrl.ebene, x, y)
+                        const dX = x
+                        const dY = y / 4
+
+                        const startX = privData.dirV.x * dY * magnitude + 2 + dX * privData.myHeight / 4
+                        const startY = privData.dirV.y * dY * magnitude + 2
+
+                        const endX = privData.dirV.x * (dY + 0.25) * magnitude + 2 + dX * privData.myHeight / 4
+                        const endY = privData.dirV.y * (dY + 0.25) * magnitude - 1
+
+                        var isSet = false
+
+                        if(val === 1)
+                        {
+                            isSet = true
+
+                            ctx.fillStyle = Qt.rgba(1.0, 0.0, 0.0, 1.0)
+
+                        }
+                        else if(val === 2)
+                        {
+                            isSet = true
+
+                            ctx.fillStyle = Qt.rgba(0.0, 1.0, 0.0, 1.0)
+                        }
+
+                        if(isSet)
+                        {
+                            ctx.beginPath();
+                            ctx.moveTo(startX, startY)
+                            ctx.lineTo(endX, endY)
+                            ctx.lineTo(endX + privData.myHeight / 4 - 4, endY)
+                            ctx.lineTo(startX + privData.myHeight / 4 - 4, startY)
+                            ctx.lineTo(startX, startY)
+                            ctx.fill()
+                        }
+                    }
+                }
+            }
 
         }
     }
@@ -143,6 +188,7 @@ Item {
             const boardCoords = mouseToBoardCoord(mouse.x, mouse.y);
 
             theModel.setValue(ctrl.ebene, boardCoords[0], boardCoords[1])
+            privData.setBoardHoverIndex(-1)
         }
 
         onPositionChanged: (mouse) => {
@@ -150,7 +196,10 @@ Item {
 
             var newHoverIndex = -1;
             if(boardCoords[0] >= 0 && boardCoords[1] >= 0)
-                newHoverIndex = boardCoords[1] * ctrl.theModel.boardSize + boardCoords[0]
+            {
+                if(ctrl.theModel.value(ctrl.ebene, boardCoords[0], boardCoords[1]) === 0)
+                    newHoverIndex = boardCoords[1] * ctrl.theModel.boardSize + boardCoords[0]
+            }
 
             privData.setBoardHoverIndex(newHoverIndex)
         }
